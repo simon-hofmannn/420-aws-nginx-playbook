@@ -1,6 +1,7 @@
 ---
 - name: Install NGINX stack on server
-  hosts: all
+  hosts: localhost
+  connection: local
   become: true
 
   vars:
