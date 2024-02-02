@@ -4,11 +4,32 @@
   connection: local
   become: true
 
+  vars:
+    webroot: "/var/www/html"
+
   tasks:
+      - name: Get objects in S3 bucket
+        amazon.aws.s3_object:
+          bucket: "{{ s3_bucket_name }}"
+          mode: list
+        register: objects_in_s3_bucket
+
+      - name: List objects in S3 bucket
+        ansible.builtin.debug:
+          msg: "{{ objects_in_s3_bucket }}"
+
+      - name: Download index.html
+        when: index.html in objects_in_s3_bucket.s3_keys
+        amazon.aws.s3_object:
+          bucket: "{{ s3_bucket_name }}"
+          object: "{{ index.html }}"
+          dest: "tmp/index.html"
+          mode: get
+
       - name: Install NGINX
         ansible.builtin.package:
           name: nginx
-          state: latest
+          state: present
 
       - name: Start NGINX
         ansible.builtin.service:

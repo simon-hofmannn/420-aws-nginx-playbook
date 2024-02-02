@@ -1,5 +1,13 @@
 # Ansible NGINX Installation and Configuration for Amazon Linux 2
 
+## Development
+
+```sh
+./bin/bootstrap.sh
+. venv/bin/activate
+
+```
+
 ## Testing
 
 ```sh
