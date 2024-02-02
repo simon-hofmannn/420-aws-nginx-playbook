@@ -1,0 +1,36 @@
+---
+- name: Install NGINX stack on server
+  hosts: all
+  become: true
+
+  vars:
+    nginx_remove_default_vhost: false
+    nginx_vhosts:
+      - listen: "80"
+        server_name: example.local.test
+        root: "/var/www/example.local.test"
+        index: "index.html index.htm"
+        state: "present"
+        filename: "example.local.conf"
+    nginx_docroot: "/var/www/example.local.test"
+
+  pre_tasks:
+    - name: Ensure apt cache is updated.
+      apt: update_cache=true cache_valid_time=600
+
+  roles:
+    - geerlingguy.nginx
+
+  tasks:
+      - name: Create web root directory
+        ansible.builtin.file:
+          path: "{{ nginx_docroot }}"
+          state: directory
+          mode: 0755
+
+      - name: Copy index.html to web root
+        ansible.builtin.copy:
+          src: "files/index.html"
+          dest: "{{ nginx_docroot }}/index.html"
+          mode: 0755
+        notify: restart nginx
