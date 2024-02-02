@@ -4,38 +4,14 @@
   connection: local
   become: true
 
-  vars:
-    nginx_remove_default_vhost: false
-    nginx_vhosts:
-      - listen: "80"
-        server_name: example.local.test
-        root: "/var/www/example.local.test"
-        index: "index.html index.htm"
-        state: "present"
-        filename: "example.local.conf"
-    nginx_docroot: "/var/www/example.local.test"
-
-  pre_tasks:
-    - name: Override wrong CentOS version in Amazon Linux 2
-      ansible.builtin.set_fact:
-        ansible_distribution_major_version: "5"
-      when:
-        - ansible_distribution == "Amazon"
-        - ansible_distribution_major_version == "2"
-
-  roles:
-    - geerlingguy.nginx
-
   tasks:
-      - name: Create web root directory
-        ansible.builtin.file:
-          path: "{{ nginx_docroot }}"
-          state: directory
-          mode: 0755
+      - name: Install NGINX
+        ansible.builtin.package:
+          name: nginx
+          state: latest
 
-      - name: Copy index.html to web root
-        ansible.builtin.copy:
-          src: "index.html"
-          dest: "{{ nginx_docroot }}/index.html"
-          mode: 0755
-        notify: restart nginx
+      - name: Start NGINX
+        ansible.builtin.service:
+          name: nginx
+          state: started
+          enable: yes
