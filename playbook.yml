@@ -4,14 +4,56 @@
   connection: local
   become: true
 
-  tasks:
-      - name: Install NGINX
-        ansible.builtin.package:
-          name: nginx
-          state: latest
+  vars:
+    content: "index.html"
+    webroot: "/usr/share/nginx/html"
+    working_dir: "/root/ansible"
 
-      - name: Start NGINX
-        ansible.builtin.service:
-          name: nginx
-          state: started
-          enabled: true
+  tasks:
+    - name: Install NGINX
+      ansible.builtin.package:
+        name: nginx
+        state: present
+
+    - name: Get objects in S3 bucket
+      amazon.aws.s3_object:
+        bucket: "{{ s3_bucket_name }}"
+        mode: list
+      register: objects_in_s3_bucket
+
+    - name: List objects in S3 bucket
+      ansible.builtin.debug:
+        msg: "{{ objects_in_s3_bucket }}"
+
+    - name: Check for content in s3 bucket
+      ansible.builtin.set_fact:
+        local_content: "{{ content not in objects_in_s3_bucket.s3_keys }}"
+
+    - name: Upload html content
+      when: local_content
+      amazon.aws.s3_object:
+        bucket: "{{ s3_bucket_name }}"
+        object: "{{ content }}"
+        src: "{{ working_dir }}/{{ content }}"
+        mode: put
+
+    - name: Move local html content to default nginx vhost
+      when: local_content
+      ansible.builtin.copy:
+        src: "{{ working_dir }}/{{ content }}"
+        dest: "{{ webroot }}/{{ content }}"
+        mode: 0644
+
+    - name: Download html content to default nginx vhost
+      when: not local_content
+      amazon.aws.s3_object:
+        bucket: "{{ s3_bucket_name }}"
+        object: "{{ content }}"
+        dest: "{{ webroot }}/{{ content }}"
+        mode: get
+
+    - name: Start NGINX
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true

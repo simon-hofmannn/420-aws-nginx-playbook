@@ -1,5 +1,22 @@
 # Ansible NGINX Installation and Configuration for Amazon Linux 2
 
+## Development
+
+```sh
+./bin/bootstrap.sh
+./venv/bin/activate
+```
+
+### VSCode
+
+Configure the python virtual environment for vscode in a `settings.json`:
+
+```sh
+{
+  "ansible.python.activationScript": "./venv/bin/activate"
+}
+```
+
 ## Testing
 
 ```sh
